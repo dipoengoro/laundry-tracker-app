@@ -1,0 +1,19 @@
+# backend/requirements.txt
+
+# Framework utama
+fastapi
+uvicorn[standard]
+
+# Database & Migrations
+sqlalchemy
+psycopg2-binary
+alembic
+
+# Validasi & Keamanan (Autentikasi)
+pydantic[email]
+python-jose[cryptography]
+passlib[bcrypt]
+python-multipart
+
+# Admin Dashboard
+sqladmin
