@@ -11,9 +11,15 @@ alembic
 
 # Validasi & Keamanan (Autentikasi)
 pydantic[email]
+pydantic-settings
 python-jose[cryptography]
 passlib[bcrypt]
+bcrypt
+argon2-cffi
 python-multipart
+fastapi-mail>=1.4.1
 
 # Admin Dashboard
 sqladmin
+
+structlog
