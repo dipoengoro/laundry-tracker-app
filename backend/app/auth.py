@@ -6,6 +6,9 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from app import schemas, database, models, crud
 from app.config import settings as env
+import logging
+
+logger = logging.getLogger(__name__)
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
@@ -20,12 +23,17 @@ def verify_access_token(token: str, credentials_exception):
     try:
         payload = jwt.decode(token, env.JWT_SECRET_KEY, algorithms=[env.JWT_ALGORITHM])
         user_id: str = payload.get("sub")
+
         if user_id is None:
+            logger.warning("Token verification failed: No user_id in token")
             raise credentials_exception
+        
         token_data = schemas.TokenData(id=user_id)
-    except JWTError:
+        return token_data
+    
+    except JWTError as e:
+        logger.warning(f"Token verification failed: {e}")
         raise credentials_exception
-    return token_data
 
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(database.get_db)):
     credentials_exception = HTTPException(
@@ -36,6 +44,7 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     token_data = verify_access_token(token, credentials_exception)
     user = db.query(models.User).filter(models.User.id == token_data.id).first()
     if user is None:
+        logger.warning(f"User not found for token: {token_data.id}")
         raise credentials_exception
     return user
 
@@ -44,6 +53,7 @@ def get_current_admin_user(current_user: models.User = Depends(get_current_user)
     Dependency yang memeriksa apakah user yang sedang login adalah seorang admin.
     """
     if not current_user.is_admin:
+        logger.warning(f"Non-admin user attempted admin access: {current_user.email}")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="The user doesn't  have enough priviledges"

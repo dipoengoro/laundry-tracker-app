@@ -17,9 +17,14 @@ passlib[bcrypt]
 bcrypt
 argon2-cffi
 python-multipart
+python-decouple
 fastapi-mail>=1.4.1
 
 # Admin Dashboard
 sqladmin
 
 structlog
+jinja2
+fastapi-users
+fastapi-users[sqlalchemy]
+aiofiles
