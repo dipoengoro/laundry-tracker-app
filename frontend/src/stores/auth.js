@@ -1,90 +1,133 @@
-// stores/auth.js
-import { defineStore } from "pinia";
-import apiClient from "../api";
+import { defineStore } from 'pinia'
+import { useApi } from '@/composables/useApi'
 
-export const useAuthStore = defineStore("auth", {
+export const useAuthStore = defineStore('auth', {
   state: () => ({
-    token: localStorage.getItem("token") || null,
     user: null,
-    isLoading: false,
+    token: localStorage.getItem('token'),
+    isAuthenticated: false
   }),
-
-  getters: {
-    isAuthenticated: (state) => !!state.token,
-    getUser: (state) => state.user,
-  },
 
   actions: {
     async login(credentials) {
-      this.isLoading = true;
+      const { api } = useApi()
+      
       try {
-        console.log("[Auth] 🔐 Attempting login...");
+        const formData = new FormData()
+        formData.append('username', credentials.email)
+        formData.append('password', credentials.password)
 
-        const formData = new URLSearchParams();
-        formData.append("username", credentials.email);
-        formData.append("password", credentials.password);
-
-        const response = await apiClient.post("/auth/login", formData, {
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        });
-
-        console.log("[Auth] ✅ Login success:", response.data);
-
-        this.token = response.data.access_token;
-        localStorage.setItem("token", this.token);
-        apiClient.defaults.headers.common["Authorization"] = `Bearer ${this.token}`;
-
-        await this.fetchUser();
+        const response = await api.post('/auth/login', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        })
+        
+        const { access_token, token_type } = response.data
+        
+        this.token = access_token
+        this.isAuthenticated = true
+        
+        localStorage.setItem('token', access_token)
+        
+        // Fetch user data
+        await this.fetchUser()
+        
+        return response.data
       } catch (error) {
-        console.error("[Auth] ❌ Login failed:", error);
-        this.logout();
-        throw error;
-      } finally {
-        this.isLoading = false;
+        this.token = null
+        this.user = null
+        this.isAuthenticated = false
+        localStorage.removeItem('token')
+        throw error
       }
     },
 
-    async logout() {
-      console.log("[Auth] 🚪 Logging out...");
-      this.token = null;
-      this.user = null;
-      localStorage.removeItem("token");
-      delete apiClient.defaults.headers.common["Authorization"];
-      console.log("[Auth] ✅ Logged out successfully.");
+    async register(userData) {
+      const { api } = useApi()
+      
+      const response = await api.post('/auth/register', userData)
+      return response.data
     },
 
     async fetchUser() {
-      if (!this.token) {
-        console.warn("[Auth] ⚠️ No token found, cannot fetch user.");
-        return;
-      }
-
+      const { api } = useApi()
+      
       try {
-        console.log("[Auth] 👤 Fetching user data...");
-        const response = await apiClient.get("/auth/users/me");
-        this.user = response.data;
-        console.log("[Auth] ✅ User fetched:", this.user);
-        return response.data;
+        const response = await api.get('/auth/users/me')
+        this.user = response.data
+        this.isAuthenticated = true
+        return response.data
       } catch (error) {
-        console.error("[Auth] ❌ Failed to fetch user:", error);
-        if (error.response?.status === 401) this.logout();
-        throw error;
+        this.logout()
+        throw error
       }
     },
 
-    initializeAuth() {
-      const token = localStorage.getItem("token");
-      if (token) {
-        console.log("[Auth] ♻️ Initializing auth with saved token.");
-        this.token = token;
-        apiClient.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-        this.fetchUser().catch(() => {
-          console.warn("[Auth] Token invalid, performing logout.");
-          this.logout();
-        });
-      } else {
-        console.log("[Auth] 🔄 No token found on startup.");
+    async updateProfile(data) {
+      const { api } = useApi()
+      
+      const response = await api.put('/auth/me', data)
+      this.user = response.data
+      return response.data
+    },
+
+    async updateProfilePicture(file) {
+      const { api } = useApi()
+      
+      const formData = new FormData()
+      formData.append('file', file)
+      
+      const response = await api.put('/auth/me/picture', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+      
+      this.user = response.data
+      return response.data
+    },
+
+    async forgotPassword(email) {
+      const { api } = useApi()
+      
+      const response = await api.post('/auth/forgot-password', { email })
+      return response.data
+    },
+
+    async resetPassword(token, newPassword) {
+      const { api } = useApi()
+      
+      const response = await api.post('/auth/reset-password', {
+        token,
+        new_password: newPassword
+      })
+      return response.data
+    },
+
+    async logout() {
+      const { api } = useApi()
+      
+      try {
+        await api.post('/auth/logout')
+      } catch (error) {
+        console.error('Logout API call failed:', error)
+      } finally {
+        this.user = null
+        this.token = null
+        this.isAuthenticated = false
+        localStorage.removeItem('token')
       }
     },
-  },
-});
+
+    async initializeAuth() {
+      if (this.token) {
+        try {
+          await this.fetchUser()
+        } catch (error) {
+          this.logout()
+        }
+      }
+    }
+  }
+})
