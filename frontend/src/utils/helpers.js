@@ -1,5 +1,3 @@
-import { API_BASE_URL } from "./constants"
-
 export function formatDateTime(dateString, options = {}) {
   if (!dateString) return ''
   
@@ -129,9 +127,10 @@ export function getStatusBadgeClass(status) {
 
 
 
-export function normalizedUrl(path, baseUrl = API_BASE_URL) {
+export function normalizedUrl(path) {
   if (!path) return null
-  return new URL(path, baseUrl).href
+  if (path.startsWith('http')) return path
+  return `/api${path.startsWith('/') ? path : '/' + path}`
 }
 
 export function normalizedDataClothing(clothing) {

@@ -13,15 +13,15 @@ export const useAuthStore = defineStore('auth', {
       const { api } = useApi()
       
       try {
-        const formData = new FormData()
-        formData.append('username', credentials.email)
-        formData.append('password', credentials.password)
+        // const formData = new FormData()
+        // formData.append('username', credentials.email)
+        // formData.append('password', credentials.password)
 
-        const response = await api.post('/auth/login', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        })
+        const params = new URLSearchParams()
+        params.append('username', credentials.email)
+        params.append('password', credentials.password)
+
+        const response = await api.post('/auth/login', params)
         
         const { access_token, token_type } = response.data
         

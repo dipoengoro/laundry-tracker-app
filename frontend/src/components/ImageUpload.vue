@@ -3,7 +3,7 @@
     <!-- Preview -->
     <div v-if="previewUrl || currentImage" class="relative">
       <img
-        :src="urlClothing(previewUrl) || currentImage"
+        :src="previewUrl || currentImage"
         alt="Preview"
         class="w-32 h-32 object-cover rounded-lg border"
       >
@@ -44,16 +44,6 @@
         </p>
         <p class="text-xs text-gray-500">PNG, JPG, GIF hingga 5MB</p>
       </div>
-    </div>
-    
-    <!-- Upload Button -->
-    <div v-if="selectedFile && !uploading" class="flex justify-center">
-      <button
-        @click="handleUpload"
-        class="btn-primary"
-      >
-        Upload Gambar
-      </button>
     </div>
     
     <!-- Loading -->
@@ -106,11 +96,6 @@ const handleDrop = (event) => {
   }
 }
 
-const urlClothing = (url) => {
-        if (!url) return null
-      return `http://localhost:8000${url}`
-    }
-
 const handleDragOver = (event) => {
   event.preventDefault()
   isDragging.value = true
@@ -147,14 +132,8 @@ const clearImage = () => {
   selectedFile.value = null
   previewUrl.value = null
   if (fileInput.value) {
-    fileInput.value.value = ''
+    fileInput.value.value = '';
   }
-}
-
-const handleUpload = () => {
-  if (!selectedFile.value) return
-  
-  emit('uploaded', selectedFile.value)
-  clearImage()
+  emit('uploaded', null);
 }
 </script>

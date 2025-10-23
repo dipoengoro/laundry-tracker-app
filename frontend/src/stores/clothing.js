@@ -45,8 +45,9 @@ export const useClothingStore = defineStore('clothing', {
       
       try {
         const response = await api.post('/pakaian/', clothingData)
-        this.clothes.push(response.data)
-        return response.data
+        const newClothing = normalizedDataClothing(response.data)
+        this.clothes.push(newClothing)
+        return newClothing
       } catch (error) {
         console.error('Failed to create clothing:', error)
         throw error
