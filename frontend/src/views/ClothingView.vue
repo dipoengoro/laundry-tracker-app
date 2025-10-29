@@ -311,6 +311,7 @@ const deleteClothing = async (clothing) => {
 
 const handleImageUpload = (file) => {
   form.value.imageFile = file;
+  console.log('>>> handleImageUpload SET form.value.imageFile:', form.value.imageFile);
   if (file) {
     logAction('CLOTHING_FORM', 'Image selected', { fileName: file.name, fileSize: file.size });
   } else {
@@ -322,6 +323,7 @@ const submitForm = async () => {
   submitting.value = true;
   let clothingId = null;
   let createOrUpdatedClothing = null;
+  console.log('>>> submitForm READ form.value.imageFile:', form.value.imageFile);
   const imageToUpload = form.value.imageFile;
 
   try {
@@ -340,6 +342,12 @@ const submitForm = async () => {
       logAction('CLOTHING', 'Clothing updated', { clothingId: clothingId });
       showToast('success', 'Pakaian berhasil diperbarui');
     }
+
+    console.log('>>> Cek Sebelum Upload:', {
+        punyaGambar: !!imageToUpload, 
+        objekFile: imageToUpload,     
+        idBaju: clothingId          
+    });
 
     if (imageToUpload && clothingId) {
       try {

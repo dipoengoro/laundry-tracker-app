@@ -133,6 +133,13 @@ export function normalizedUrl(path) {
   return `/api${path.startsWith('/') ? path : '/' + path}`
 }
 
+export function normalizedDataProfile(profile) {
+  return {
+    ...profile,
+    foto_profile_url: normalizedUrl(profile.foto_profile_url)
+  }
+}
+
 export function normalizedDataClothing(clothing) {
   return {
     ...clothing,

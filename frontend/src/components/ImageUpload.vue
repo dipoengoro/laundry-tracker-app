@@ -125,7 +125,8 @@ const validateAndSetFile = (file) => {
   reader.onload = (e) => {
     previewUrl.value = e.target.result
   }
-  reader.readAsDataURL(file)
+  reader.readAsDataURL(file);
+  emit('uploaded', file);
 }
 
 const clearImage = () => {

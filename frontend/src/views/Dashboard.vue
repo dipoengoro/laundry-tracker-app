@@ -168,7 +168,7 @@
           <div class="card-image">
             <img 
               v-if="pakaian.foto_url" 
-              :src="urlClothing(pakaian.foto_url)" 
+              :src="pakaian.foto_url" 
               :alt="pakaian.nama_pakaian"
               class="clothing-img"
             >
@@ -541,12 +541,6 @@ export default {
         showToast('Gagal menghapus pakaian!', 'error')
       }
     }
-
-    const urlClothing = (url) => {
-        if (!url) return null
-      return `http://localhost:8000${url}`
-    }
-
     
     // Lifecycle
     onMounted(async () => {

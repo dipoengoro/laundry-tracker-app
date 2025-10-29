@@ -70,7 +70,8 @@ router.beforeEach(async (to, from, next) => {
     try {
       await authStore.initializeAuth()
     } catch (error) {
-      console.error('Auth initialization failed:', error)
+      console.error('Auth initialization failed, likely invalid token:', error)
+      authStore.logout()
     }
   }
   

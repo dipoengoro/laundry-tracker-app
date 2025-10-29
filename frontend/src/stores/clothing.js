@@ -98,10 +98,11 @@ export const useClothingStore = defineStore('clothing', {
         // Update local state
         const index = this.clothes.findIndex(c => c.id === clothingId)
         if (index !== -1) {
-          this.clothes[index] = response.data
+          const normalizedData = normalizedDataClothing(response.data)
+          this.clothes[index] = normalizedData;
         }
         
-        return response.data
+        return normalizedDataClothing(response.data)
       } catch (error) {
         console.error('Failed to upload clothing image:', error)
         throw error
