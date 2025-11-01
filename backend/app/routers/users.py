@@ -1,10 +1,9 @@
 import os
-import shutil
 import textwrap
 from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
-from app import schemas, crud, database, models, auth, hashing, email_utils
+from app import schemas, crud, database, models, auth, hashing, email_utils, minio_client
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import datetime
 import logging
@@ -81,7 +80,7 @@ def read_users_me(current_user: models.User = Depends(auth.get_current_user)):
 
 
 @router.put("/me/picture", response_model=schemas.UserOut)
-def update_profile_picture(
+async def update_profile_picture(
     file: UploadFile = File(...),
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(auth.get_current_user)
@@ -99,23 +98,27 @@ def update_profile_picture(
             detail="Only image file (JPEG, PNG, GIF) are allowed"
         )
     file_extension = file.filename.split(".")[-1]
-    file_name = f"{current_user.id}_{datetime.now().timestamp()}.{file_extension}"
-    file_path = os.path.join(IMAGE_DIR, file_name)
+    object_name = f"user_images/{current_user.id}/{datetime.now().timestamp()}.{file_extension}"
 
     try:
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-        public_url = f"/static/images/{file_name}"
+        uploaded_object_name = await minio_client.upload_file_to_minio(
+            file=file,
+            object_name=object_name
+        )
+
+        public_url = minio_client.get_minio_url(uploaded_object_name)
+
         current_user.foto_profil_url = public_url
         db.commit()
         db.refresh(current_user)
 
-        logger.info(f"Profile picture updated successfully: {file_name}")
+        logger.info(f"Profile picture updated successfully: {public_url}")
         return current_user
-    
+    except HTTPException as http_exc:
+        raise http_exc
     except Exception as e:
-        logger.error(f"Failed to upload profile picture: {e}")
-        raise HTTPException(status_code=500, detail="Failed to upload image")
+        logger.error(f"Failed to process profile picture upload: {e}")
+        raise HTTPException(status_code=500, detail="Failed to update profile picture.")
 
 @router.post("/forgot-password", status_code=status.HTTP_200_OK)
 async def forgot_password(

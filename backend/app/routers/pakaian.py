@@ -1,9 +1,8 @@
 import os
-import shutil
 from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile
 from sqlalchemy.orm import Session
 from typing import List
-from app import schemas, crud, auth, models, database
+from app import schemas, crud, auth, models, database, minio_client
 from datetime import datetime
 
 router = APIRouter(
@@ -28,6 +27,9 @@ def read_pakaian(
 ):
     """Mengambil daftar semua pakaian milik user yang sedang login."""
     pakaian_list = crud.get_pakaian_by_user(db, user_id=current_user.id)
+    for pakaian in pakaian_list:
+        if pakaian.foto_url:
+            pakaian.foto_url = minio_client.get_presigned_url(pakaian.foto_url)
     return pakaian_list
 
 @router.get("/{pakaian_id}", response_model=schemas.Pakaian)
@@ -44,6 +46,9 @@ def read_single_pakaian(
     # Pemeriksaan keamanan: Pastikan pakaian ini milik user yang sedang login
     if db_pakaian.pemilik_id != current_user.id:
         raise HTTPException(status_code=404, detail="Pakaian not found")
+    
+    if db_pakaian.foto_url:
+        db_pakaian.foto_url = minio_client.get_presigned_url(db_pakaian.foto_url)
     
     return db_pakaian
 
@@ -87,32 +92,35 @@ def soft_delete_single_pakaian(
     
     return crud.soft_delete_pakaian(db=db, db_pakaian=db_pakaian)
 
-@router.post("/{pakaian_id}/image", response_model=schemas.Pakaian)
-def upload_pakaian_image(
+class PakaianImageUpload(schemas.BaseModel):
+    file_name: str
+    content_type: str
+
+@router.post("/{pakaian_id}/image-upload-url", response_model=schemas.PresignedUrl)
+async def generate_upload_url(
     pakaian_id: int,
-    file: UploadFile = File(...),
+    upload_data: PakaianImageUpload,
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
-    """Mengunggah gambar untuk item pakaian tertentu."""
-    # 1. Ambil data pakaian dan validasi kepemilikan
+    """Generate a pre-signed URL for uploading an image."""
     db_pakaian = crud.get_pakaian_by_id(db, pakaian_id=pakaian_id)
     if db_pakaian is None or db_pakaian.pemilik_id != current_user.id:
         raise HTTPException(status_code=404, detail="Pakaian not found")
-    
-    IMAGE_DIR = "static/images/pakaian/"
-    os.makedirs(IMAGE_DIR, exist_ok=True)
 
-    file_extension = file.filename.split(".")[-1]
-    file_name = f"{pakaian_id}_{datetime.now().timestamp()}.{file_extension}"
-    file_path = os.path.join(IMAGE_DIR, file_name)
+    allowed_types = ["image/jpeg", "image/jpg", "image/png", "image/gif"]
+    if upload_data.content_type not in allowed_types:
+        raise HTTPException(
+            status_code=400,
+            detail="Only image files (JPEG, PNG, GIF) are allowed"
+        )
 
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    file_extension = upload_data.file_name.split(".")[-1]
+    object_name = f"clothing_images/{current_user.id}/{pakaian_id}_{datetime.now().timestamp()}.{file_extension}"
 
-    public_url = f"/{file_path}"
-    db_pakaian.foto_url = public_url
+    presigned_url_data = minio_client.create_presigned_upload_url(object_name=object_name)
+
+    db_pakaian.foto_url = object_name
     db.commit()
-    db.refresh(db_pakaian)
 
-    return db_pakaian
+    return {"url": presigned_url_data['url'], "fields": presigned_url_data['fields']}

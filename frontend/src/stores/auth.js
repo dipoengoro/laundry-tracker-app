@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia'
 import { useApi } from '@/composables/useApi'
-import { normalizedDataProfile } from '../utils/helpers'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -27,9 +26,10 @@ export const useAuthStore = defineStore('auth', {
         localStorage.setItem('token', access_token)
 
         try {
-          // Fetch user data
-          await this.fetchUser()
-          return normalizedDataProfile(response.data)
+          const userResponse = await api.get('/auth/users/me')
+          this.user = userResponse.data
+          this.isAuthenticated = true
+          return this.user
         } catch (fetchUserError) {
           console.error("fetchUser failed immediately after login:", fetchUserError);
           this.logout();
@@ -78,12 +78,9 @@ export const useAuthStore = defineStore('auth', {
             'Content-Type': 'multipart/form-data'
           }
         })
+        this.user = response.data
 
-        const normalizedData = normalizedDataProfile(response.data)
-
-        this.user = normalizedData
-
-        return normalizedDataProfile(response.data)
+        return response.data
       } catch (error) {
         console.error('Failed to upload profile image:', error)
         throw error

@@ -15,7 +15,7 @@
       <span
         :class="[
           'inline-flex items-center px-3 py-1 rounded-full text-xs font-medium',
-          getStatusColor(session.status)
+          getStatusBadgeClass(session.status)
         ]"
       >
         {{ session.status }}
@@ -93,9 +93,9 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
 import { LAUNDRY_STATUSES } from '@/utils/constants'
 import { formatDateTime } from '@/utils/helpers'
+import { getStatusBadgeClass } from '@/utils/helpers'
 
 const props = defineProps({
   session: {
@@ -110,22 +110,6 @@ const availableStatuses = LAUNDRY_STATUSES
 
 const formatDate = (dateString) => {
   return formatDateTime(dateString)
-}
-
-const getStatusColor = (status) => {
-  const statusObj = LAUNDRY_STATUSES.find(s => s.value === status)
-  if (!statusObj) return 'bg-gray-100 text-gray-800'
-  
-  const colorMap = {
-    blue: 'bg-blue-100 text-blue-800',
-    indigo: 'bg-indigo-100 text-indigo-800',
-    purple: 'bg-purple-100 text-purple-800',
-    pink: 'bg-pink-100 text-pink-800',
-    green: 'bg-green-100 text-green-800',
-    gray: 'bg-gray-100 text-gray-800'
-  }
-  
-  return colorMap[statusObj.color] || 'bg-gray-100 text-gray-800'
 }
 
 const getProgressPercentage = (status) => {

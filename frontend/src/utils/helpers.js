@@ -1,3 +1,5 @@
+import { LAUNDRY_STATUSES } from '@/utils/constants'
+
 export function formatDateTime(dateString, options = {}) {
   if (!dateString) return ''
   
@@ -113,7 +115,7 @@ export function formatFileSize(bytes) {
 }
 
 export function getStatusBadgeClass(status) {
-  const statusClasses = {
+  const colorMap = {
     'Diterima': 'bg-blue-100 text-blue-800',
     'Dicuci': 'bg-indigo-100 text-indigo-800',
     'Dikeringkan': 'bg-purple-100 text-purple-800',
@@ -121,28 +123,12 @@ export function getStatusBadgeClass(status) {
     'Selesai': 'bg-green-100 text-green-800',
     'Diambil': 'bg-gray-100 text-gray-800'
   }
+
+  const statusObj = LAUNDRY_STATUSES.find(s => s.value === status)
+
+  if (statusObj && colorMap[statusObj.color]) {
+    return colorMap[statusObj.color]
+  }
   
-  return statusClasses[status] || 'bg-gray-100 text-gray-800'
-}
-
-
-
-export function normalizedUrl(path) {
-  if (!path) return null
-  if (path.startsWith('http')) return path
-  return `/api${path.startsWith('/') ? path : '/' + path}`
-}
-
-export function normalizedDataProfile(profile) {
-  return {
-    ...profile,
-    foto_profile_url: normalizedUrl(profile.foto_profile_url)
-  }
-}
-
-export function normalizedDataClothing(clothing) {
-  return {
-    ...clothing,
-    foto_url: normalizedUrl(clothing.foto_url)
-  }
+  return 'bg-gray-100 text-gray-800'
 }

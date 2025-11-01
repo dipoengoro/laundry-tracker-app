@@ -1,12 +1,12 @@
 import { defineStore } from 'pinia'
 import { useApi } from '@/composables/useApi'
-import { normalizedDataClothing } from '../utils/helpers'
-
 
 export const useClothingStore = defineStore('clothing', {
   state: () => ({
     clothes: [],
-    loading: false
+    loading: false,
+    presignedUrlCache: {},
+    presignedUrlExpiry: {},
   }),
 
   actions: {
@@ -17,7 +17,7 @@ export const useClothingStore = defineStore('clothing', {
       
       try {
         const response = await api.get('/pakaian/')
-        this.clothes = response.data.map(normalizedDataClothing);
+        this.clothes = response.data;
         console.log(this.clothes);
       } catch (error) {
         console.error('Failed to fetch clothes:', error)
@@ -29,11 +29,22 @@ export const useClothingStore = defineStore('clothing', {
 
     async getClothingById(id) {
       const { api } = useApi()
-      
+      const now = Date.now()
+
       try {
         const response = await api.get(`/pakaian/${id}`)
-        console.log(response.data);
-        return normalizedDataClothing(response.data);
+        const clothing = response.data
+
+        if (this.presignedUrlCache[id] && this.presignedUrlExpiry[id] > now) {
+          clothing.foto_url = this.presignedUrlCache[id]
+        } else if (clothing.foto_url) {
+          const presignedResponse = await api.get(`/pakaian/${id}`)
+          clothing.foto_url = presignedResponse.data.foto_url
+          this.presignedUrlCache[id] = clothing.foto_url
+          this.presignedUrlExpiry[id] = now + 14 * 60 * 1000
+        }
+
+        return clothing;
       } catch (error) {
         console.error('Failed to fetch clothing:', error)
         throw error
@@ -45,7 +56,7 @@ export const useClothingStore = defineStore('clothing', {
       
       try {
         const response = await api.post('/pakaian/', clothingData)
-        const newClothing = normalizedDataClothing(response.data)
+        const newClothing = response.data
         this.clothes.push(newClothing)
         return newClothing
       } catch (error) {
@@ -81,32 +92,5 @@ export const useClothingStore = defineStore('clothing', {
         throw error
       }
     },
-
-    async uploadClothingImage(clothingId, file) {
-      const { api } = useApi()
-      
-      try {
-        const formData = new FormData()
-        formData.append('file', file)
-        
-        const response = await api.post(`/pakaian/${clothingId}/image`, formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        })
-        
-        // Update local state
-        const index = this.clothes.findIndex(c => c.id === clothingId)
-        if (index !== -1) {
-          const normalizedData = normalizedDataClothing(response.data)
-          this.clothes[index] = normalizedData;
-        }
-        
-        return normalizedDataClothing(response.data)
-      } catch (error) {
-        console.error('Failed to upload clothing image:', error)
-        throw error
-      }
-    }
   }
 })

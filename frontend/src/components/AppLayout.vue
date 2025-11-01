@@ -27,7 +27,7 @@
         <div class="p-4 border-t border-gray-200">
           <div class="flex items-center space-x-3">
             <img
-              :src="user?.foto_profile_url  || '/default-avatar.png'"
+              :src="user?.foto_profil_url  || '/default-avatar.png'"
               :alt="user?.username"
               class="w-10 h-10 rounded-full object-cover"
             >

@@ -8,7 +8,7 @@ import logging
 import os
 from app.database import Base, engine
 from app.routers import users, pakaian, laundry, admin
-from app import models
+from app import models, minio_client
 
 Base.metadata.create_all(bind=engine)
 
@@ -108,6 +108,11 @@ async def startup_event():
     logger.info("🚀 Laundry Tracker API started successfully!")
     logger.info("📝 API Documentation available at: http://localhost:8000/docs")
     logger.info("🔧 Admin Panel available at: http://localhost:8000/admin")
+
+    try:
+        minio_client.ensure_bucket_exists(minio_client.env.MINIO_BUCKET)
+    except Exception as e:
+        logger.error(f"Failed to ensure MinIO bucket exists on startup: {e}")
 
 
 @app.on_event("shutdown")

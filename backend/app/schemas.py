@@ -79,5 +79,9 @@ class ResetPasswordRequest(BaseModel):
     token: str
     new_password: str
 
+class PresignedUrl(BaseModel):
+    url: str
+    fields: dict
+
 class UserUpdate(BaseModel):
     email: EmailStr | None = None

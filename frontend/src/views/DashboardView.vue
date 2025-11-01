@@ -143,7 +143,7 @@
               <span
                 :class="[
                   'px-2 py-1 rounded-full text-xs font-medium',
-                  getStatusColor(session.status)
+                  getStatusBadgeClass(session.status)
                 ]"
               >
                 {{ session.status }}
@@ -210,7 +210,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useClothingStore } from '@/stores/clothing'
 import { useLaundryStore } from '@/stores/laundry'
 import { useLogging } from '@/composables/useLogging'
-import { LAUNDRY_STATUSES } from '@/utils/constants'
+import { getStatusBadgeClass } from '@/utils/helpers'
 import AppLayout from '@/components/AppLayout.vue'
 
 const authStore = useAuthStore()
@@ -238,22 +238,6 @@ const recentClothes = computed(() =>
   clothingStore.clothes
     .slice(0, 5)
 )
-
-const getStatusColor = (status) => {
-  const statusObj = LAUNDRY_STATUSES.find(s => s.value === status)
-  if (!statusObj) return 'bg-gray-100 text-gray-800'
-  
-  const colorMap = {
-    blue: 'bg-blue-100 text-blue-800',
-    indigo: 'bg-indigo-100 text-indigo-800',
-    purple: 'bg-purple-100 text-purple-800',
-    pink: 'bg-pink-100 text-pink-800',
-    green: 'bg-green-100 text-green-800',
-    gray: 'bg-gray-100 text-gray-800'
-  }
-  
-  return colorMap[statusObj.color] || 'bg-gray-100 text-gray-800'
-}
 
 const refreshData = async () => {
   try {

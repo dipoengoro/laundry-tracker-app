@@ -56,18 +56,24 @@
 <script setup>
 import { ref } from 'vue'
 import { useToast } from '@/composables/useToast'
+import { usePresignedUrl } from '@/composables/usePresignedUrl'
 import LoadingSpinner from './LoadingSpinner.vue'
 
 const props = defineProps({
   currentImage: {
     type: String,
     default: null
+  },
+  pakaianId: {
+    type: Number,
+    required: true
   }
 })
 
 const emit = defineEmits(['uploaded', 'error'])
 
 const { showToast } = useToast()
+const { getPresignedUrl, uploadFile } = usePresignedUrl()
 
 const fileInput = ref(null)
 const selectedFile = ref(null)
@@ -105,7 +111,7 @@ const handleDragLeave = () => {
   isDragging.value = false
 }
 
-const validateAndSetFile = (file) => {
+const validateAndSetFile = async (file) => {
   // Validate file type
   if (!file.type.startsWith('image/')) {
     showToast('error', 'Hanya file gambar yang diperbolehkan')
@@ -125,8 +131,20 @@ const validateAndSetFile = (file) => {
   reader.onload = (e) => {
     previewUrl.value = e.target.result
   }
-  reader.readAsDataURL(file);
-  emit('uploaded', file);
+  reader.readAsDataURL(file)
+
+  uploading.value = true
+  try {
+    const presignedUrlData = await getPresignedUrl(props.pakaianId, file)
+    await uploadFile(presignedUrlData, file)
+    emit('uploaded')
+    showToast('success', 'Gambar berhasil diunggah')
+  } catch (error) {
+    emit('error', error)
+    showToast('error', 'Gagal mengunggah gambar')
+  } finally {
+    uploading.value = false
+  }
 }
 
 const clearImage = () => {

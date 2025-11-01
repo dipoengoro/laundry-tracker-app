@@ -28,3 +28,5 @@ jinja2
 fastapi-users
 fastapi-users[sqlalchemy]
 aiofiles
+boto3
+minio
