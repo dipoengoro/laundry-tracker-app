@@ -174,8 +174,8 @@
             <div>
               <label class="form-label">Foto Pakaian</label>
               <ImageUpload
-                :current-image="form.foto_url"
-                @uploaded="handleImageUpload"
+               :pakaianId="editingClothing?.id" :current-image="form.foto_url"
+               @uploaded="onImageUploaded" @file-selected="onFileSelected"
               />
             </div>
             
@@ -229,6 +229,7 @@ import ClothingCard from '@/components/ClothingCard.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import ImageUpload from '@/components/ImageUpload.vue'
+import { usePresignedUrl } from "@/composables/usePresignedUrl";
 
 const router = useRouter()
 const clothingStore = useClothingStore()
@@ -244,6 +245,8 @@ const confirmDialog = ref(null)
 const searchQuery = ref('')
 const filterCategory = ref('')
 const filterColor = ref('')
+const { getPresignedUrl, uploadFile } = usePresignedUrl()
+const fileToUpload = ref(null)
 
 const form = ref({
   nama_pakaian: '',
@@ -283,6 +286,11 @@ const filteredClothes = computed(() => {
   return clothes
 })
 
+const onFileSelected = (file) => {
+  logAction('CLOTHING_FORM', 'File selected for upload', { name: file?.name })
+  fileToUpload.value = file
+}
+
 const viewClothing = (clothing) => {
   logAction('CLOTHING', 'View clothing detail', { clothingId: clothing.id })
   router.push(`/clothing/${clothing.id}`)
@@ -309,72 +317,68 @@ const deleteClothing = async (clothing) => {
   }
 }
 
-const handleImageUpload = (file) => {
-  form.value.imageFile = file;
-  console.log('>>> handleImageUpload SET form.value.imageFile:', form.value.imageFile);
-  if (file) {
-    logAction('CLOTHING_FORM', 'Image selected', { fileName: file.name, fileSize: file.size });
-  } else {
-    logAction('CLOTHING_FORM', 'Image cleared');
+const onImageUploaded = async () => {
+  try {
+    const updatedClothing = await clothingStore.getClothingById(editingClothing.value.id)
+    form.value.foto_url = updatedClothing.foto_url
+    await clothingStore.fetchClothes()
+    showToast('success', 'Gambar berhasil di-refresh')
+  } catch (error) {
+    showToast('error', 'Gagal nge-refresh data gambar')
   }
 }
 
 const submitForm = async () => {
   submitting.value = true;
-  let clothingId = null;
-  let createOrUpdatedClothing = null;
-  console.log('>>> submitForm READ form.value.imageFile:', form.value.imageFile);
-  const imageToUpload = form.value.imageFile;
+  const textData = {
+    nama_pakaian: form.value.nama_pakaian,
+    kategori: form.value.kategori,
+    jenis_pakaian: form.value.jenis_pakaian,
+    warna: form.value.warna,
+    bahan: form.value.bahan,
+    petunjuk_pencucian: form.value.petunjuk_pencucian,
+    mudah_luntur: form.value.mudah_luntur,
+  }
+  if (showAddModal.value) {
+    let newClothing = null
+    try {
+      newClothing = await clothingStore.createClothing(textData)
+      logAction('CLOTHING', 'New clothing created', { id: newClothing.id, name: newClothing.nama_pakaian })
 
-  try {
-    const textData = { ...form.value };
-    delete textData.imageFile;
-    delete textData.foto_url;
-
-    if (showAddModal.value) {
-      createOrUpdatedClothing = await clothingStore.createClothing(textData);
-      clothingId = createOrUpdatedClothing?.id;
-      logAction('CLOTHING', 'New clothing created', { name: form.value.nama_pakaian })
-      showToast('success', 'Pakaian berhasil ditambahkan')
-    } else {
-      clothingId = editingClothing.value.id;
-      createOrUpdatedClothing = await clothingStore.updateClothing(clothingId, textData);
-      logAction('CLOTHING', 'Clothing updated', { clothingId: clothingId });
-      showToast('success', 'Pakaian berhasil diperbarui');
-    }
-
-    console.log('>>> Cek Sebelum Upload:', {
-        punyaGambar: !!imageToUpload, 
-        objekFile: imageToUpload,     
-        idBaju: clothingId          
-    });
-
-    if (imageToUpload && clothingId) {
-      try {
-        logAction('CLOTHING', 'Uploading image', { clothingId });
-        const updatedClothingWithImage = await clothingStore.uploadClothingImage(clothingId, imageToUpload);
-        const index = clothingStore.clothes.findIndex(c => c.id === clothingId);
-        if (index !== -1) {
-          clothingStore.clothes[index] = updatedClothingWithImage;
-        }
-
-        if (showEditModal.value) {
-          form.value.foto_url = updatedClothingWithImage.foto_url;
-        }
-        showToast('success', 'Gambar berhasil diupload');
-        logAction('CLOTHING', 'Image uploaded successfully', { clothingId });
-      } catch (uploadError) {
-        logAction('CLOTHING', 'Image upload failed', { clothingId, error: uploadError.message });
+      if (fileToUpload.value) {
+        logAction('CLOTHING', 'Starting image upload waterfall...', { id: newClothing.id })
+        const urlData = await getPresignedUrl(newClothing.id, fileToUpload.value)
+        await uploadFile(urlData, fileToUpload.value)
+        logAction('CLOTHING', 'Image upload complete', { id: newClothing.id })
       }
+      showToast('success', 'Pakaian berhasil ditambahkan!')
+      closeModal()
+      await clothingStore.fetchClothes()
+    } catch (error) {
+      logAction('CLOTHING', 'Create/Upload failed', { error: error.message })
+      if (newClothing) {
+        showToast('warning', 'Data teks sukses, tapi upload foto gagal.')
+        closeModal()
+        await clothingStore.fetchClothes();
+      } else {
+        showToast('error', 'Gagal membuat pakaian')
+      }
+    } finally {
+      submitting.value = false
     }
-
-    closeModal();
-  } catch (error) {
-    logAction('CLOTHING', showAddModal.value ? 'Create clothing failed' : 'Update clothing failed', { error: error.message })
-    showToast('error', 'Terjadi kesalahan, silakan coba lagi')
-  } finally {
-    submitting.value = false;
-    form.value.imageFile = null;
+  } else  {
+    try {
+      await clothingStore.updateClothing(editingClothing.value.id, textData)
+      logAction('CLOTHING', 'Clothing updated', { clothingId: editingClothing.value.id })
+      showToast('success', 'Pakaian berhasil diperbarui')
+      closeModal()
+      await clothingStore.fetchClothes()
+    } catch (error) {
+      logAction('CLOTHING', 'Update clothing failed', { error: error.message })
+      showToast('error', 'Gagal memperbarui pakaian')
+    } finally {
+      submitting.valu = false
+    }
   }
 }
 
@@ -382,6 +386,7 @@ const closeModal = () => {
   showAddModal.value = false
   showEditModal.value = false
   editingClothing.value = null
+  fileToUpload.value = null
   form.value = {
     nama_pakaian: '',
     kategori: '',

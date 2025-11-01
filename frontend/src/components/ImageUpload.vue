@@ -70,7 +70,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['uploaded', 'error'])
+const emit = defineEmits(['uploaded', 'error', 'file-selected'])
 
 const { showToast } = useToast()
 const { getPresignedUrl, uploadFile } = usePresignedUrl()
@@ -133,17 +133,21 @@ const validateAndSetFile = async (file) => {
   }
   reader.readAsDataURL(file)
 
-  uploading.value = true
-  try {
-    const presignedUrlData = await getPresignedUrl(props.pakaianId, file)
-    await uploadFile(presignedUrlData, file)
-    emit('uploaded')
-    showToast('success', 'Gambar berhasil diunggah')
-  } catch (error) {
-    emit('error', error)
-    showToast('error', 'Gagal mengunggah gambar')
-  } finally {
-    uploading.value = false
+  if (props.pakaianId) {
+    uploading.value = true
+    try {
+      const presignedUrlData = await getPresignedUrl(props.pakaianId, file)
+      await uploadFile(presignedUrlData, file)
+      emit('uploaded')
+      showToast('success', 'Gambar berhasil diunggah')
+    } catch (error) {
+      emit('error', error)
+      showToast('error', 'Gagal mengunggah gambar')
+    } finally {
+      uploading.value = false
+    }
+  } else {
+    emit('file-selected', file)
   }
 }
 
@@ -153,6 +157,10 @@ const clearImage = () => {
   if (fileInput.value) {
     fileInput.value.value = '';
   }
-  emit('uploaded', null);
+  if (props.pakaianId) {
+    emit('uploaded', null)
+  } else {
+    emit('file-selected', null)
+  }
 }
 </script>
