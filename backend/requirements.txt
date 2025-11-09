@@ -30,3 +30,4 @@ fastapi-users[sqlalchemy]
 aiofiles
 boto3
 minio
+prometheus-fastapi-instrumentator

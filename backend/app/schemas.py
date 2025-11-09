@@ -85,3 +85,7 @@ class PresignedUrl(BaseModel):
 
 class UserUpdate(BaseModel):
     email: EmailStr | None = None
+
+class ImageUploadRequest(BaseModel):
+    file_name: str
+    content_type: str

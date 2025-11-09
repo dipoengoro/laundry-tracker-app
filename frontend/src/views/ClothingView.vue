@@ -319,17 +319,18 @@ const deleteClothing = async (clothing) => {
 
 const onImageUploaded = async () => {
   try {
-    const updatedClothing = await clothingStore.getClothingById(editingClothing.value.id)
-    form.value.foto_url = updatedClothing.foto_url
     await clothingStore.fetchClothes()
-    showToast('success', 'Gambar berhasil di-refresh')
+    showToast('success', 'Daftar pakaian telah di-refresh')
   } catch (error) {
-    showToast('error', 'Gagal nge-refresh data gambar')
+    showToast('error', 'Gagal nge-refresh data pakaian')
   }
 }
 
 const submitForm = async () => {
   submitting.value = true;
+  const isAdding = showAddModal.value;
+
+  // Prepare text data, excluding foto_url which is handled by the backend
   const textData = {
     nama_pakaian: form.value.nama_pakaian,
     kategori: form.value.kategori,
@@ -339,46 +340,39 @@ const submitForm = async () => {
     petunjuk_pencucian: form.value.petunjuk_pencucian,
     mudah_luntur: form.value.mudah_luntur,
   }
-  if (showAddModal.value) {
-    let newClothing = null
-    try {
-      newClothing = await clothingStore.createClothing(textData)
-      logAction('CLOTHING', 'New clothing created', { id: newClothing.id, name: newClothing.nama_pakaian })
 
+  try {
+    let clothingId;
+    if (isAdding) {
+      // Create the clothing item first to get an ID
+      const newClothing = await clothingStore.createClothing(textData);
+      clothingId = newClothing.id;
+      logAction('CLOTHING', 'New clothing created', { id: clothingId, name: newClothing.nama_pakaian });
+
+      // If there's a file, upload it now
       if (fileToUpload.value) {
-        logAction('CLOTHING', 'Starting image upload waterfall...', { id: newClothing.id })
-        const urlData = await getPresignedUrl(newClothing.id, fileToUpload.value)
-        await uploadFile(urlData, fileToUpload.value)
-        logAction('CLOTHING', 'Image upload complete', { id: newClothing.id })
+        const urlData = await getPresignedUrl(clothingId, fileToUpload.value);
+        await uploadFile(urlData, fileToUpload.value);
+        logAction('CLOTHING', 'Image upload complete', { id: clothingId });
       }
-      showToast('success', 'Pakaian berhasil ditambahkan!')
-      closeModal()
-      await clothingStore.fetchClothes()
-    } catch (error) {
-      logAction('CLOTHING', 'Create/Upload failed', { error: error.message })
-      if (newClothing) {
-        showToast('warning', 'Data teks sukses, tapi upload foto gagal.')
-        closeModal()
-        await clothingStore.fetchClothes();
-      } else {
-        showToast('error', 'Gagal membuat pakaian')
-      }
-    } finally {
-      submitting.value = false
+      showToast('success', 'Pakaian berhasil ditambahkan!');
+    } else {
+      // For editing, just update the text data
+      clothingId = editingClothing.value.id;
+      await clothingStore.updateClothing(clothingId, textData);
+      logAction('CLOTHING', 'Clothing updated', { clothingId });
+      showToast('success', 'Pakaian berhasil diperbarui');
     }
-  } else  {
-    try {
-      await clothingStore.updateClothing(editingClothing.value.id, textData)
-      logAction('CLOTHING', 'Clothing updated', { clothingId: editingClothing.value.id })
-      showToast('success', 'Pakaian berhasil diperbarui')
-      closeModal()
-      await clothingStore.fetchClothes()
-    } catch (error) {
-      logAction('CLOTHING', 'Update clothing failed', { error: error.message })
-      showToast('error', 'Gagal memperbarui pakaian')
-    } finally {
-      submitting.valu = false
-    }
+
+    // Close modal and refresh the entire list for consistency
+    closeModal();
+    await clothingStore.fetchClothes();
+
+  } catch (error) {
+    logAction('CLOTHING', isAdding ? 'Create/Upload failed' : 'Update failed', { error: error.message });
+    showToast('error', isAdding ? 'Gagal menambahkan pakaian' : 'Gagal memperbarui pakaian');
+  } finally {
+    submitting.value = false;
   }
 }
 

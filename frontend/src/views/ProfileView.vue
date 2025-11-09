@@ -151,7 +151,7 @@
         <div class="p-6">
           <ImageUpload
             :current-image="user?.foto_profil_url"
-            @uploaded="updateProfilePicture"
+            @file-selected="updateProfilePicture"
           />
         </div>
       </div>

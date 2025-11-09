@@ -52,6 +52,8 @@ services:
                 condition: service_healthy
             minio:
                 condition: service_healthy
+        extra_hosts:
+          - "host.docker.internal:host-gateway"
 
     # Layanan untuk Frontend Vue/Vite
     frontend:
@@ -110,9 +112,22 @@ services:
         volumes:
             - grafana_data:/var/lib/grafana
 
+
+    prometheus:
+        image: prom/prometheus:latest
+        ports:
+            - "9090:9090"
+        volumes:
+            - ./prometheus-config.yml:/etc/prometheus/prometheus.yml
+            - prometheus_data:/prometheus
+        command: '--config.file=/etc/prometheus/prometheus.yml'
+        depends_on:
+            -   backend
+
 volumes:
     postgres_data:
     backend_static:
     grafana_data:
     loki_data:
     minio_data:
+    prometheus_data:

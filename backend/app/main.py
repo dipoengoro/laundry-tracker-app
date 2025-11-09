@@ -9,6 +9,7 @@ import os
 from app.database import Base, engine
 from app.routers import users, pakaian, laundry, admin
 from app import models, minio_client
+from prometheus_fastapi_instrumentator import Instrumentator
 
 Base.metadata.create_all(bind=engine)
 
@@ -54,6 +55,8 @@ async def global_exception_handler(request: Request, exc: Exception):
         status_code=500,
         content={"detail": "Internal server error"}
     )
+
+Instrumentator().instrument(app).expose(app)
 
 # Mounting folder statis
 app.mount("/static", StaticFiles(directory="static"), name="static")

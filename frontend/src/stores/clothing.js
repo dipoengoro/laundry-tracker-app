@@ -5,8 +5,6 @@ export const useClothingStore = defineStore('clothing', {
   state: () => ({
     clothes: [],
     loading: false,
-    presignedUrlCache: {},
-    presignedUrlExpiry: {},
   }),
 
   actions: {
@@ -29,22 +27,9 @@ export const useClothingStore = defineStore('clothing', {
 
     async getClothingById(id) {
       const { api } = useApi()
-      const now = Date.now()
-
       try {
         const response = await api.get(`/pakaian/${id}`)
-        const clothing = response.data
-
-        if (this.presignedUrlCache[id] && this.presignedUrlExpiry[id] > now) {
-          clothing.foto_url = this.presignedUrlCache[id]
-        } else if (clothing.foto_url) {
-          const presignedResponse = await api.get(`/pakaian/${id}`)
-          clothing.foto_url = presignedResponse.data.foto_url
-          this.presignedUrlCache[id] = clothing.foto_url
-          this.presignedUrlExpiry[id] = now + 14 * 60 * 1000
-        }
-
-        return clothing;
+        return response.data;
       } catch (error) {
         console.error('Failed to fetch clothing:', error)
         throw error

@@ -1,0 +1,55 @@
+# Nama situs
+site_name:  Dokumentasi Laundry Tracker 🧺
+site_description: Dokumentasi teknis untuk aplikasi Laundry Tracker.
+
+# Tema (kita pakai Material)
+theme:
+  name: material
+  palette:
+    # Warna primer (biru, cocok sama app kamu)
+    primary: blue
+    accent: blue
+  features:
+    - navigation.tabs
+    - navigation.top
+    - search.suggest
+    - content.code.annotate
+
+# Ekstensi Markdown
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+
+# Plugins
+plugins:
+  - search
+
+  # Plugin si "magic" untuk narik docstring Python
+  - mkdocstrings:
+      handlers:
+        python:
+          # Beritahu mkdocstrings di mana kode Python-mu berada
+          # (kita tambahkan 'backend' ke path-nya)
+          options: {
+            paths: [.],
+            show_if_no_docstring: true
+          }
+
+  # Plugin untuk generate PDF
+  - with-pdf:
+      output_path: ../dokumentasi-laundry-tracker.pdf
+      # (file PDF akan disimpan di root folder, di luar 'site/')
+
+# Navigasi (ini akan jadi tab di website-mu)
+nav:
+  - 'Selamat Datang': 'index.md'
+  - 'Dokumentasi Backend':
+    - 'API Endpoints': 'backend_api.md'
+    - 'Model Database': 'backend_models.md'
+  - 'Dokumentasi Frontend':
+    - 'Tampilan (Views)': 'frontend_views.md'
