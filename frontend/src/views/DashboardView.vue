@@ -4,10 +4,10 @@
       <!-- Welcome Section -->
       <div class="bg-gradient-to-r from-primary-500 to-blue-600 rounded-lg p-6 text-white">
         <h1 class="text-2xl font-bold mb-2">
-          Selamat datang, {{ user?.username }}! 👋
+          Welcome, {{ user?.username }}! 👋
         </h1>
         <p class="text-primary-100">
-          Kelola pakaian dan sesi laundry Anda dengan mudah
+          Manage your clothing and laundry sessions with ease.
         </p>
       </div>
       
@@ -21,7 +21,7 @@
               </svg>
             </div>
             <div class="ml-4">
-              <p class="text-sm font-medium text-gray-600">Total Pakaian</p>
+              <p class="text-sm font-medium text-gray-600">Total Clothing</p>
               <p class="text-2xl font-semibold text-gray-900">{{ stats.totalClothes }}</p>
             </div>
           </div>
@@ -35,7 +35,7 @@
               </svg>
             </div>
             <div class="ml-4">
-              <p class="text-sm font-medium text-gray-600">Sesi Aktif</p>
+              <p class="text-sm font-medium text-gray-600">Active Sessions</p>
               <p class="text-2xl font-semibold text-gray-900">{{ stats.activeSessions }}</p>
             </div>
           </div>
@@ -49,7 +49,7 @@
               </svg>
             </div>
             <div class="ml-4">
-              <p class="text-sm font-medium text-gray-600">Sedang Proses</p>
+              <p class="text-sm font-medium text-gray-600">In Progress Session</p>
               <p class="text-2xl font-semibold text-gray-900">{{ stats.inProgress }}</p>
             </div>
           </div>
@@ -63,7 +63,7 @@
               </svg>
             </div>
             <div class="ml-4">
-              <p class="text-sm font-medium text-gray-600">Selesai</p>
+              <p class="text-sm font-medium text-gray-600">Completed Sessions</p>
               <p class="text-2xl font-semibold text-gray-900">{{ stats.completed }}</p>
             </div>
           </div>
@@ -72,7 +72,7 @@
       
       <!-- Quick Actions -->
       <div class="bg-white rounded-lg shadow-md p-6">
-        <h2 class="text-lg font-semibold text-gray-900 mb-4">Aksi Cepat</h2>
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Quick Action</h2>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
           <router-link
             to="/clothing"
@@ -82,7 +82,7 @@
             <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-2">
               <span class="text-2xl">👕</span>
             </div>
-            <span class="text-sm font-medium text-gray-700">Tambah Pakaian</span>
+            <span class="text-sm font-medium text-gray-700">Add Clothing</span>
           </router-link>
           
           <router-link
@@ -93,7 +93,7 @@
             <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-2">
               <span class="text-2xl">🧺</span>
             </div>
-            <span class="text-sm font-medium text-gray-700">Sesi Laundry</span>
+            <span class="text-sm font-medium text-gray-700">Laundry Sessions</span>
           </router-link>
           
           <router-link
@@ -104,7 +104,7 @@
             <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-2">
               <span class="text-2xl">👤</span>
             </div>
-            <span class="text-sm font-medium text-gray-700">Profil</span>
+            <span class="text-sm font-medium text-gray-700">Profile</span>
           </router-link>
           
           <button
@@ -124,9 +124,9 @@
         <!-- Recent Laundry Sessions -->
         <div class="bg-white rounded-lg shadow-md p-6">
           <div class="flex justify-between items-center mb-4">
-            <h2 class="text-lg font-semibold text-gray-900">Sesi Terbaru</h2>
+            <h2 class="text-lg font-semibold text-gray-900">New Sessions</h2>
             <router-link to="/laundry" class="text-primary-600 hover:text-primary-700 text-sm font-medium">
-              Lihat Semua
+              Show all
             </router-link>
           </div>
           
@@ -137,8 +137,8 @@
               class="flex justify-between items-center p-3 bg-gray-50 rounded-lg"
             >
               <div>
-                <p class="font-medium text-gray-900">Sesi #{{ session.id }}</p>
-                <p class="text-sm text-gray-600">{{ session.item_pakaian.length }} item</p>
+                <p class="font-medium text-gray-900">Session #{{ session.id }}</p>
+                <p class="text-sm text-gray-600">{{ session.clothing_items.length }} item</p>
               </div>
               <span
                 :class="[
@@ -151,9 +151,9 @@
             </div>
             
             <div v-if="!recentSessions.length" class="text-center py-8 text-gray-500">
-              <p>Belum ada sesi laundry</p>
+              <p>There is no laundry session</p>
               <router-link to="/laundry" class="text-primary-600 hover:text-primary-700 text-sm">
-                Buat sesi baru
+                Create new session
               </router-link>
             </div>
           </div>
@@ -162,9 +162,9 @@
         <!-- Recent Clothes -->
         <div class="bg-white rounded-lg shadow-md p-6">
           <div class="flex justify-between items-center mb-4">
-            <h2 class="text-lg font-semibold text-gray-900">Pakaian Terbaru</h2>
+            <h2 class="text-lg font-semibold text-gray-900">New Clothing</h2>
             <router-link to="/clothing" class="text-primary-600 hover:text-primary-700 text-sm font-medium">
-              Lihat Semua
+              Show All
             </router-link>
           </div>
           
@@ -176,9 +176,9 @@
             >
               <div class="w-12 h-12 bg-gray-200 rounded-lg flex-shrink-0 overflow-hidden">
                 <img
-                  v-if="clothing.foto_url"
-                  :src="clothing.foto_url"
-                  :alt="clothing.nama_pakaian"
+                  v-if="clothing.photo_url"
+                  :src="clothing.photo_url"
+                  :alt="clothing.name"
                   class="w-full h-full object-cover"
                 >
                 <div v-else class="w-full h-full flex items-center justify-center text-gray-400">
@@ -186,15 +186,15 @@
                 </div>
               </div>
               <div class="flex-1 min-w-0">
-                <p class="font-medium text-gray-900 truncate">{{ clothing.nama_pakaian }}</p>
-                <p class="text-sm text-gray-600 truncate">{{ clothing.kategori }}</p>
+                <p class="font-medium text-gray-900 truncate">{{ clothing.name }}</p>
+                <p class="text-sm text-gray-600 truncate">{{ clothing.category }}</p>
               </div>
             </div>
             
             <div v-if="!recentClothes.length" class="text-center py-8 text-gray-500">
-              <p>Belum ada pakaian</p>
+              <p>There is no clothing yet</p>
               <router-link to="/clothing" class="text-primary-600 hover:text-primary-700 text-sm">
-                Tambah pakaian
+                Add first clothing
               </router-link>
             </div>
           </div>
@@ -222,15 +222,15 @@ const user = computed(() => authStore.user)
 
 const stats = computed(() => ({
   totalClothes: clothingStore.clothes.length,
-  activeSessions: laundryStore.sessions.filter(s => !['Selesai', 'Diambil'].includes(s.status)).length,
-  inProgress: laundryStore.sessions.filter(s => ['Dicuci', 'Dikeringkan', 'Disetrika'].includes(s.status)).length,
-  completed: laundryStore.sessions.filter(s => s.status === 'Selesai').length
+  activeSessions: laundryStore.sessions.filter(s => !['Completed', 'Taken'].includes(s.status)).length,
+  inProgress: laundryStore.sessions.filter(s => ['Washing', 'Drying', 'Ironing'].includes(s.status)).length,
+  completed: laundryStore.sessions.filter(s => s.status === 'Completed').length
 }))
 
 const recentSessions = computed(() => 
   laundryStore.sessions
     .slice()
-    .sort((a, b) => new Date(b.tanggal_masuk) - new Date(a.tanggal_masuk))
+    .sort((a, b) => new Date(b.date_received) - new Date(a.date_received))
     .slice(0, 5)
 )
 

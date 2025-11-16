@@ -1,31 +1,31 @@
-from fastapi import FastAPI, Request
-from fastapi.staticfiles import StaticFiles
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.responses import JSONResponse
-from sqladmin import Admin, ModelView
 import logging
-import os
-from app.database import Base, engine
-from app.routers import users, pakaian, laundry, admin
-from app import models, minio_client
+
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from prometheus_fastapi_instrumentator import Instrumentator
+from sqladmin import Admin, ModelView
+
+from app import models, minio_client
+from app.database import Base, engine
+from app.routers import users, laundry_sessions, clothing, admin as admin_router
 
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Laundry Tracker API",
-    description="API  for managing laundry tracking system",
+    description="API for managing laundry tracking system",
     version="1.0.0"
-    )
+)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 origins = [
-    "http://localhost:3000",    # React default
-    "http://localhost:5173",    # Vite default
-    "http://localhost:8080",    # Vue CLI default
+    "http://localhost:3000",  # React default
+    "http://localhost:5173",  # Vite default
+    "http://localhost:8080",  # Vue CLI default
     "http://127.0.0.1:3000",
     "http://127.0.0.1:5173",
     "http://127.0.0.1:8080",
@@ -42,6 +42,7 @@ app.add_middleware(
     expose_headers=["*"],
 )
 
+
 # Trusted Host Middleware (optional, for production)
 # app.add_middleware(
 #     TrustedHostMiddleware, 
@@ -56,6 +57,7 @@ async def global_exception_handler(request: Request, exc: Exception):
         content={"detail": "Internal server error"}
     )
 
+
 Instrumentator().instrument(app).expose(app)
 
 # Mounting folder statis
@@ -63,26 +65,42 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 admin = Admin(app, engine)
 
+
 class UserAdmin(ModelView, model=models.User):
-    column_list = [models.User.id, models.User.email, models.User.username, models.User.is_admin, models.User.created_at]
+    column_list = [models.User.id, models.User.email, models.User.username, models.User.is_admin,
+                   models.User.created_at]
     column_searchable_list = [models.User.email, models.User.username]
     column_sortable_list = [models.User.id]
 
-class PakaianAdmin(ModelView, model=models.Pakaian):
-    column_list = [models.Pakaian.id, models.Pakaian.nama_pakaian, models.Pakaian.kategori, models.Pakaian.pemilik]
-    column_labels = {models.Pakaian.pemilik: "Pemilik"}
 
-class SesiLaundryAdmin(ModelView, model=models.SesiLaundry):
-    column_list = [models.SesiLaundry.id, models.SesiLaundry.status, models.SesiLaundry.tanggal_masuk, models.SesiLaundry.pemilik_id]
+class ClothingItemAdmin(ModelView, model=models.ClothingItem):
+    column_list = [
+        models.ClothingItem.id,
+        models.ClothingItem.name,
+        models.ClothingItem.category,
+        models.ClothingItem.owner
+    ]
+    column_labels = {models.ClothingItem.owner: "Owner"}
+
+
+class LaundrySessionAdmin(ModelView, model=models.LaundrySession):
+    column_list = [
+        models.LaundrySession.id,
+        models.LaundrySession.status,
+        models.LaundrySession.date_received,
+        models.LaundrySession.owner_id
+    ]
+
 
 admin.add_view(UserAdmin)
-admin.add_view(PakaianAdmin)
-admin.add_view(SesiLaundryAdmin)
+admin.add_view(ClothingItemAdmin)
+admin.add_view(LaundrySessionAdmin)
 
 app.include_router(users.router)
-app.include_router(pakaian.router)
-app.include_router(laundry.router)
-app.include_router(admin.admin.router)
+app.include_router(clothing.router)
+app.include_router(laundry_sessions.router)
+app.include_router(admin_router.router)
+
 
 @app.get("/")
 def read_root():
@@ -94,7 +112,8 @@ def read_root():
         "message": "Welcome to the Laundry Tracker API! 🧺",
         "status": "running",
         "version": "1.0.0"
-        }
+    }
+
 
 @app.get("/health")
 def health_check():
@@ -106,6 +125,7 @@ def health_check():
         "message": "API is running properly"
     }
 
+
 @app.on_event("startup")
 async def startup_event():
     logger.info("🚀 Laundry Tracker API started successfully!")
@@ -116,8 +136,10 @@ async def startup_event():
         minio_client.ensure_bucket_exists(minio_client.env.MINIO_BUCKET)
     except Exception as e:
         logger.error(f"Failed to ensure MinIO bucket exists on startup: {e}")
+    pass
 
 
 @app.on_event("shutdown")
 async def shutdown_event():
     logger.info("🛑 Laundry Tracker API shutting down...")
+    pass

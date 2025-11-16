@@ -7,13 +7,13 @@
           Sesi #{{ session.id }}
         </h3>
         <p class="text-sm text-gray-500">
-          {{ formatDate(session.tanggal_masuk) }}
+          {{ formatDate(session.date_received) }}
         </p>
       </div>
-      
+
       <!-- Status Badge -->
       <span
-        :class="[
+          :class="[
           'inline-flex items-center px-3 py-1 rounded-full text-xs font-medium',
           getStatusBadgeClass(session.status)
         ]"
@@ -21,33 +21,33 @@
         {{ session.status }}
       </span>
     </div>
-    
+
     <!-- Items Count -->
     <div class="mb-4">
       <p class="text-sm text-gray-600">
-        <span class="font-medium">{{ session.item_pakaian.length }}</span> item pakaian
+        <span class="font-medium">{{ session.clothing_items.length }}</span> clothing item
       </p>
     </div>
-    
+
     <!-- Items Preview -->
     <div class="mb-4">
       <div class="flex flex-wrap gap-2">
         <div
-          v-for="(item, index) in session.item_pakaian.slice(0, 3)"
-          :key="item.id"
-          class="flex items-center space-x-1 bg-gray-100 px-2 py-1 rounded text-xs"
+            v-for="(item, _) in session.clothing_items.slice(0, 3)"
+            :key="item.id"
+            class="flex items-center space-x-1 bg-gray-100 px-2 py-1 rounded text-xs"
         >
-          <span>{{ item.nama_pakaian }}</span>
+          <span>{{ item.name }}</span>
         </div>
         <div
-          v-if="session.item_pakaian.length > 3"
-          class="flex items-center px-2 py-1 bg-gray-200 rounded text-xs text-gray-600"
+            v-if="session.clothing_items.length > 3"
+            class="flex items-center px-2 py-1 bg-gray-200 rounded text-xs text-gray-600"
         >
-          +{{ session.item_pakaian.length - 3 }} lainnya
+          +{{ session.clothing_items.length - 3 }} others
         </div>
       </div>
     </div>
-    
+
     <!-- Progress Bar -->
     <div class="mb-4">
       <div class="flex justify-between text-xs text-gray-500 mb-1">
@@ -56,32 +56,32 @@
       </div>
       <div class="w-full bg-gray-200 rounded-full h-2">
         <div
-          class="bg-primary-500 h-2 rounded-full transition-all duration-300"
-          :style="{ width: `${getProgressPercentage(session.status)}%` }"
+            :style="{ width: `${getProgressPercentage(session.status)}%` }"
+            class="bg-primary-500 h-2 rounded-full transition-all duration-300"
         ></div>
       </div>
     </div>
-    
+
     <!-- Estimated Completion -->
-    <div v-if="session.estimasi_selesai" class="mb-4 text-sm text-gray-600">
-      <span class="font-medium">Estimasi selesai:</span>
-      {{ formatDate(session.estimasi_selesai) }}
+    <div v-if="session.estimated_completion" class="mb-4 text-sm text-gray-600">
+      <span class="font-medium">Estimated completion:</span>
+      {{ formatDate(session.estimated_completion) }}
     </div>
-    
+
     <!-- Actions -->
     <div class="flex justify-between items-center">
       <button
-        @click="$emit('view-details', session)"
-        class="text-primary-600 hover:text-primary-700 text-sm font-medium"
+          class="text-primary-600 hover:text-primary-700 text-sm font-medium"
+          @click="$emit('view-details', session)"
       >
-        Lihat Detail
+        View Details
       </button>
-      
-      <div class="space-x-2" v-if="canUpdateStatus(session.status)">
+
+      <div v-if="canUpdateStatus(session.status)" class="space-x-2">
         <select
-          :value="session.status"
-          @change="$emit('update-status', session.id, $event.target.value)"
-          class="text-xs border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            :value="session.status"
+            class="text-xs border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            @change="$emit('update-status', session.id, $event.target.value)"
         >
           <option v-for="status in availableStatuses" :key="status.value" :value="status.value">
             {{ status.label }}
@@ -93,9 +93,8 @@
 </template>
 
 <script setup>
-import { LAUNDRY_STATUSES } from '@/utils/constants'
-import { formatDateTime } from '@/utils/helpers'
-import { getStatusBadgeClass } from '@/utils/helpers'
+import {LAUNDRY_STATUSES} from '@/utils/constants'
+import {formatDateTime, getStatusBadgeClass} from '@/utils/helpers'
 
 const props = defineProps({
   session: {
@@ -114,10 +113,11 @@ const formatDate = (dateString) => {
 
 const getProgressPercentage = (status) => {
   const statusIndex = LAUNDRY_STATUSES.findIndex(s => s.value === status)
+  if (statusIndex === -1) return 0
   return Math.round(((statusIndex + 1) / LAUNDRY_STATUSES.length) * 100)
 }
 
 const canUpdateStatus = (currentStatus) => {
-  return !['Selesai', 'Diambil'].includes(currentStatus)
+  return !['Completed', 'Taken'].includes(currentStatus)
 }
 </script>

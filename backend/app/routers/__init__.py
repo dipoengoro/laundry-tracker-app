@@ -1,1 +1,1 @@
-from . import users, pakaian, laundry, admin
+from . import users, clothing, laundry_sessions, admin

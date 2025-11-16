@@ -1,107 +1,108 @@
 export const NAVIGATION_ITEMS = [
-  {
-    name: 'Dashboard',
-    path: '/dashboard',
-    icon: '🏠'
-  },
-  {
-    name: 'My Clothes',
-    path: '/clothing',
-    icon: '👕'
-  },
-  {
-    name: 'Laundry Sessions',
-    path: '/laundry',
-    icon: '🧺'
-  },
-  {
-    name: 'Profile',
-    path: '/profile',
-    icon: '👤'
-  }
+    {
+        name: 'Dashboard',
+        path: '/dashboard',
+        icon: '🏠'
+    },
+    {
+        name: 'My Clothes',
+        path: '/clothing',
+        icon: '👕'
+    },
+    {
+        name: 'Laundry Sessions',
+        path: '/laundry-sessions',
+        icon: '🧺'
+    },
+    {
+        name: 'Profile',
+        path: '/profile',
+        icon: '👤'
+    }
 ]
 
 export const CLOTHING_CATEGORIES = [
-  'Atasan',
-  'Bawahan',
-  'Dalam',
-  'Luar',
-  'Aksesoris'
+    'Top',
+    'Bottom',
+    'Underwear',
+    'Outwear',
+    'Accessory'
 ]
 
 export const CLOTHING_TYPES = [
-  'Kemeja',
-  'T-Shirt',
-  'Kaos',
-  'Celana Panjang',
-  'Celana Pendek',
-  'Rok',
-  'Dress',
-  'Jaket',
-  'Sweater',
-  'Jeans'
+    'Shirt',
+    'T-Shirt',
+    'Pants',
+    'Shorts',
+    'Skirt',
+    'Dress',
+    'Jacket',
+    'Sweater',
+    'Jeans',
+    'Socks'
 ]
 
 export const CLOTHING_COLORS = [
-  'Putih',
-  'Hitam',
-  'Merah',
-  'Biru',
-  'Hijau',
-  'Kuning',
-  'Ungu',
-  'Pink',
-  'Abu-abu',
-  'Coklat'
+    'White',
+    'Black',
+    'Red',
+    'Blue',
+    'Green',
+    'Yellow',
+    'Purple',
+    'Pink',
+    'Gray',
+    'Brown',
+    'Beige'
 ]
 
 export const CLOTHING_MATERIALS = [
-  'Katun',
-  'Polyester',
-  'Denim',
-  'Sutra',
-  'Wol',
-  'Linen',
-  'Rayon',
-  'Spandex',
-  'Campuran'
+    'Cotton',
+    'Polyester',
+    'Denim',
+    'Silk',
+    'Wool',
+    'Linen',
+    'Rayon',
+    'Spandex',
+    'Blend'
 ]
 
 export const LAUNDRY_STATUSES = [
-  {
-    value: 'Diterima',
-    label: 'Diterima',
-    color: 'blue',
-    description: 'Pakaian telah diterima'
-  },
-  {
-    value: 'Dicuci',
-    label: 'Dicuci',
-    color: 'indigo',
-    description: 'Sedang dalam proses pencucian'
-  },
-  {
-    value: 'Dikeringkan',
-    label: 'Dikeringkan',
-    color: 'purple',
-    description: 'Sedang dalam proses pengeringan'
-  },
-  {
-    value: 'Disetrika',
-    label: 'Disetrika',
-    color: 'pink',
-    description: 'Sedang dalam proses penyetrikaan'
-  },
-  {
-    value: 'Selesai',
-    label: 'Selesai',
-    color: 'green',
-    description: 'Sudah selesai diproses'
-  },
-  {
-    value: 'Diambil',
-    label: 'Diambil',
-    color: 'gray',
-    description: 'Sudah diambil pemilik'
-  }
+    {
+        value: 'Received',
+        label: 'Received',
+        color: 'blue',
+        description: 'Clothing has been received'
+    },
+    {
+        value: 'Washing',
+        label: 'Washing',
+        color: 'indigo',
+        description: 'Currently in the washing process'
+    },
+    {
+        value: 'Drying',
+        label: 'Drying',
+        color: 'purple',
+        description: 'Currently in the drying process'
+    },
+    {
+        value: 'Ironing',
+        label: 'Ironing',
+        color: 'pink',
+        description: 'Currently in the ironing process'
+    },
+    {
+        value: 'Completed',
+        label: 'Completed',
+        color: 'green',
+        description: 'Processing is complete'
+    },
+    {
+        value: 'Taken',
+        label: 'Taken',
+        color: 'gray',
+        description: 'Taken by owner'
+    }
 ]

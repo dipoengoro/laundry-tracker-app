@@ -1,6 +1,7 @@
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
 from enum import Enum
+from typing import List, Optional
 
 class UserCreate(BaseModel):
     email: EmailStr
@@ -11,7 +12,7 @@ class UserOut(BaseModel):
     id: int
     email: EmailStr
     username: str
-    foto_profil_url: str | None = None
+    profile_photo_url: Optional[str] = None
     created_at: datetime
 
     class Config:
@@ -22,55 +23,55 @@ class Token(BaseModel):
     token_type: str
 
 class TokenData(BaseModel):
-    id: str | None = None
+    id: Optional[str] = None
 
-class PakaianBase(BaseModel):
-    nama_pakaian: str
-    kategori: str | None = None
-    jenis_pakaian: str | None = None
-    warna: str | None = None
-    bahan: str | None = None
-    petunjuk_pencucian: str | None = None
-    mudah_luntur: bool = False
-    foto_url: str | None = None
+class ClothingItemBase(BaseModel):
+    name: str
+    category: Optional[str] = None
+    type: Optional[str] = None
+    color: Optional[str] = None
+    material: Optional[str] = None
+    washing_instructions: Optional[str] = None
+    fades_easily: bool = False
+    photo_url: str | None = None
 
-class PakaianCreate(PakaianBase):
+class ClothingItemCreate(ClothingItemBase):
     pass
 
-class Pakaian(PakaianBase):
+class ClothingItem(ClothingItemBase):
     id: int
-    pemilik_id: int
+    owner_id: int
 
     class Config:
         from_attributes = True
 
-class SesiLaundryCreate(BaseModel):
-    item_pakaian_ids: list[int]
+class LaundrySessionCreate(BaseModel):
+    clothing_item_ids: List[int]
 
-class SesiLaundry(BaseModel):
+class LaundrySession(BaseModel):
     id: int
     status: str
-    tanggal_masuk: datetime
-    estimasi_selesai: datetime | None = None
-    item_pakaian: list[Pakaian]
+    date_received: datetime
+    estimated_completion: Optional[datetime] = None
+    clothing_items: List[ClothingItem] = []
 
     class Config:
         from_attributes = True
 
 
-class PakaianUpdate(PakaianBase):
+class ClothingItemUpdate(ClothingItemBase):
     pass
 
-class StatusLaundry(str, Enum):
-    diterima = "Diterima"
-    dicuci = "Dicuci"
-    dikeringkan = "Dikeringkan"
-    disetrika = "Disetrika"
-    selesai = "Selesai"
-    diambil = "Diambil"
+class LaundryStatus(str, Enum):
+    received = "Received"
+    washing = "Washing"
+    drying = "Drying"
+    ironing = "Ironing"
+    completed = "Completed"
+    taken = "Taken"
 
-class SesiLaundryUpdateStatus(BaseModel):
-    status: StatusLaundry
+class LaundrySessionUpdateStatus(BaseModel):
+    status: LaundryStatus
 
 class ForgotPasswordRequest(BaseModel):
     email: EmailStr
@@ -84,7 +85,7 @@ class PresignedUrl(BaseModel):
     fields: dict
 
 class UserUpdate(BaseModel):
-    email: EmailStr | None = None
+    email: Optional[EmailStr] = None
 
 class ImageUploadRequest(BaseModel):
     file_name: str

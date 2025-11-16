@@ -9,20 +9,24 @@ from app import models, schemas, hashing
 
 def create_user(db: Session, user: schemas.UserCreate) -> models.User:
     """
-    Membuat user baru dan menyimpannya ke database.
+    Creates a new user and saves it to the database.
 
-    Melakukan hashing password sebelum menyimpan ke database.
+    Performs password hashing before saving.
 
     Args:
-        db (Session): Sesi database SQLAlchemy yang aktif.
-        user (schemas.UserCreate): Skema Pydantic berisi data user baru.
+        db (Session): The active SQLAlchemy database session.
+        user (schemas.UserCreate): Pydantic schema with new user data.
 
     Returns:
-        models.User: Objek user SQLAlchemy (model) yang baru dibuat.
+        models.User: The newly created User SQLAlchemy model object.
     """
     hashed_password = hashing.get_password_hash(user.password)
 
-    db_user = models.User(email=user.email, username=user.username, hashed_password=hashed_password)
+    db_user = models.User(
+        email=user.email,
+        username=user.username,
+        hashed_password=hashed_password
+    )
 
     db.add(db_user)
     db.commit()
@@ -32,97 +36,204 @@ def create_user(db: Session, user: schemas.UserCreate) -> models.User:
 
 def get_user_by_email(db: Session, email: str) -> Optional[models.User]:
     """
-    Mengambil satu user dari database berdasarkan email.
+    Gets a single user from the database by their email.
 
     Args:
-        db (Session): Sesi database SQLAlchemy.
-        email (str): Email user yang dicari.
+        db (Session): The SQLAlchemy database session.
+        email (str): The user's email to search for.
 
     Returns:
-        Optional[models.User]: Objek user jika ditemukan, None jika tidak.
+        Optional[models.User]: The User object if found, else None.
     """
     return db.query(models.User).filter(models.User.email == email).first()
 
 
 def get_user_by_id(db: Session, id: int) -> Optional[models.User]:
     """
-    Mengambil satu user dari database berdasarkan ID.
+    Gets a single user from the database by their ID.
 
     Args:
-        db (Session): Sesi database SQLAlchemy.
-        id (int): ID user yang dicari.
+        db (Session): The SQLAlchemy database session.
+        id (int): The user's ID to search for.
 
     Returns:
-        Optional[models.User]: Objek user jika ditemukan, None jika tidak.
+        Optional[models.User]: The User object if found, else None.
     """
     return db.query(models.User).filter(models.User.id == id).first()
 
 
-def get_pakaian_by_user(db: Session, user_id: int) -> List[models.Pakaian]:
+def get_clothing_items_by_user(db: Session, user_id: int) -> List[models.ClothingItem]:
     """
-    Mengambil semua pakaian (yang tidak di-soft-delete) milik satu user.
+    Gets all (non-soft-deleted) clothing items for a specific user.
 
     Args:
-        db (Session): Sesi database SQLAlchemy.
-        user_id (int): ID user pemilik pakaian.
+        db (Session): The SQLAlchemy database session.
+        user_id (int): The ID of the user who owns the items.
 
     Returns:
-        List[models.Pakaian]: Daftar objek pakaian milik user (bisa kosong).
+        List[models.ClothingItem]: A list of ClothingItem objects (can be empty).
     """
-    return db.query(models.Pakaian).filter(models.Pakaian.pemilik_id == user_id,
-                                           models.Pakaian.deleted_at == None).all()
+    return db.query(models.ClothingItem).filter(
+        models.ClothingItem.owner_id == user_id,
+        models.ClothingItem.deleted_at == None
+    ).all()
 
 
-def create_user_pakaian(db: Session, pakaian: schemas.PakaianCreate, user_id: int) -> models.Pakaian:
+def create_user_clothing_item(
+        db: Session,
+        clothing_item: schemas.ClothingItemCreate,
+        user_id: int
+) -> models.ClothingItem:
     """
-    Membuat item pakaian baru untuk seorang user.
+    Creates a new clothing item for a specific user.
 
     Args:
-        db (Session): Sesi database SQLAlchemy.
-        pakaian (schemas.PakaianCreate): Skema data pakaian baru.
-        user_id (int): ID user pemilik.
+        db (Session): The SQLAlchemy database session.
+        clothing_item (schemas.ClothingItemCreate): Schema with the new clothing data.
+        user_id (int): The ID of the owner user.
 
     Returns:
-        models.Pakaian: Objek pakaian yang baru dibuat.
+        models.ClothingItem: The newly created ClothingItem object.
     """
-    db_pakaian = models.Pakaian(**pakaian.model_dump(), pemilik_id=user_id)
+    db_clothing_item = models.ClothingItem(**clothing_item.model_dump(), owner_id=user_id)
 
-    db.add(db_pakaian)
+    db.add(db_clothing_item)
     db.commit()
-    db.refresh(db_pakaian)
-    return db_pakaian
+    db.refresh(db_clothing_item)
+    return db_clothing_item
 
 
-def create_laundry_session(db: Session, user_id: int, session_data: schemas.SesiLaundryCreate) -> Optional[
-    models.SesiLaundry]:
+def get_clothing_item_by_id(db: Session, clothing_item_id: int) -> Optional[models.ClothingItem]:
     """
-    Membuat sesi laundry baru untuk seorang user.
-
-    Validasi akan gagal (return None) jika salah satu ID pakaian tidak ditemukan atau bukan milik user.
+    Gets a single (non-soft-deleted) clothing item by its ID.
 
     Args:
-        db (Session): Sesi database SQLAlchemy.
-        user_id (int): ID user pemilik sesi.
-        session_data (schemas.SesiLaundryCreate): Skema berisi list ID pakaian.
+        db (Session): The SQLAlchemy database session.
+        clothing_item_id (int): The ID of the clothing item.
 
     Returns:
-        Optional[models.SesiLaundry]: Objek sesi laundry jika berhasil, None jika gagal validasi.
+        Optional[models.ClothingItem]: The ClothingItem object if found, else None.
     """
-    # 1. Buat objek SesiLaundry utama
-    db_session = models.SesiLaundry(pemilik_id=user_id)
+    return db.query(models.Pakaian).filter(
+        models.Pakaian.id == pakaian_id,
+        models.Pakaian.deleted_at == None
+    ).first()
+
+
+def update_clothing_item(
+        db: Session,
+        db_clothing_item: models.ClothingItem,
+        clothing_item_update: schemas.ClothingItemUpdate
+) -> models.ClothingItem:
+    """
+    Updates data for a clothing item in the database.
+
+    Args:
+        db (Session): The SQLAlchemy database session.
+        db_clothing_item (models.ClothingItem): The SQLAlchemy model object to update.
+        clothing_update (schemas.ClothingItemUpdate): Schema with the new data.
+
+    Returns:
+        models.ClothingItem: The updated ClothingItem object.
+    """
+    # Ambil data dari skema sebagai dictionary
+    update_data = clothing_item_update.model_dump(exclude_unset=True)
+
+    # Loop melalui data dan update field di objek SQLAlchemy
+    for key, value in update_data.items():
+        setattr(db_clothing_item, key, value)
+
+    db.add(db_clothing_item)
+    db.commit()
+    db.refresh(db_clothing_item)
+    return db_clothing_item
+
+
+def soft_delete_clothing_item(
+        db: Session,
+        db_clothing_item: models.ClothingItem
+) -> dict:
+    """
+    Soft deletes a clothing item by setting its 'deleted_at' timestamp.
+
+    Args:
+        db (Session): The SQLAlchemy database session.
+        db_clothing_item (models.ClothingItem): The model object to soft delete.
+
+    Returns:
+        dict: A confirmation message.
+    """
+    db_clothing_item.deleted_at = datetime.now(timezone.utc)
+    db.add(db_clothing_item)
+    db.commit()
+    return {"message": "Clothing item successfully moved to trash"}
+
+
+def update_clothing_item_photo_url(
+        db: Session,
+        clothing_item_id: int,
+        photo_url: str
+) -> Optional[models.ClothingItem]:
+    """
+    Updates the photo_url (MinIO object name) for a specific clothing item.
+
+    Called after generating a pre-signed URL to save the object path.
+
+    Args:
+        db (Session): The SQLAlchemy database session.
+        clothing_item_id (int): The ID of the clothing item to update.
+        photo_url (str): The new object name (path) to save.
+
+    Returns:
+        Optional[models.ClothingItem]: The updated ClothingItem, or None if not found.
+    """
+    db_clothing_item = get_clothing_item_by_id(db, clothing_item_id=clothing_item_id)
+
+    if db_clothing_item:
+        db_clothing_item.photo_url = photo_url
+        db.add(db_clothing_item)
+        db.commit()
+        db.refresh(db_clothing_item)
+
+    return db_clothing_item
+
+
+def create_laundry_session(
+        db: Session,
+        user_id: int,
+        session_data: schemas.LaundrySessionCreate
+) -> Optional[models.LaundrySession]:
+    """
+    Creates a new laundry session for a user.
+
+    Validation fails (returns None) if any clothing item IDs
+    are not found or do not belong to the user.
+
+    Args:
+        db (Session): The SQLAlchemy database session.
+        user_id (int): The ID of the session owner.
+        session_data (schemas.LaundrySessionCreate): Schema containing the list of clothing item IDs.
+
+    Returns:
+        Optional[models.LaundrySession]: The new LaundrySession object, or None if validation fails.
+    """
+    # 1. Buat objek LaundrySession utama
+    db_session = models.LaundrySession(owner_id=user_id)
     db.add(db_session)
 
     # 2. Ambil objek Pakaian dari DB berdasarkan ID dan pastikan milik user
-    pakaian_objects = db.query(models.Pakaian).filter(models.Pakaian.id.in_(session_data.item_pakaian_ids),
-        models.Pakaian.pemilik_id == user_id).all()
+    clothing_items = db.query(models.ClothingItem).filter(
+        models.ClothingItem.id.in_(session_data.clothing_item_ids),
+        models.ClothingItem.owner_id == user_id
+    ).all()
 
     # Validasi jika ada ID pakaian yang tidak valid atau bukan milik user
-    if len(pakaian_objects) != len(session_data.item_pakaian_ids):
+    if len(clothing_items) != len(session_data.clothing_item_ids):
         db.rollback()
         return None
 
     # 3. Tambahkan pakaian ke sesi laundry
-    db_session.item_pakaian.extend(pakaian_objects)
+    db_session.clothing_items.extend(clothing_items)
 
     # 4. Simpan semua perubahan ke database
     db.commit()
@@ -130,102 +241,55 @@ def create_laundry_session(db: Session, user_id: int, session_data: schemas.Sesi
     return db_session
 
 
-def get_laundry_sessions_by_user(db: Session, user_id: int) -> List[models.SesiLaundry]:
+def get_laundry_sessions_by_user(
+        db: Session,
+        user_id: int
+) -> List[models.LaundrySession]:
     """
-    Mengambil semua sesi laundry milik satu user.
+    Gets all laundry sessions for a specific user.
 
     Args:
-        db (Session): Sesi database SQLAlchemy.
-        user_id (int): ID user pemilik sesi.
+        db (Session): The SQLAlchemy database session.
+        user_id (int): The ID of the session owner.
 
     Returns:
-        List[models.SesiLaundry]: Daftar objek sesi laundry.
+        List[models.LaundrySession]: A list of LaundrySession objects.
     """
-    return db.query(models.SesiLaundry).filter(models.SesiLaundry.pemilik_id == user_id).all()
+    return db.query(models.LaundrySession).filter(models.LaundrySession.owner_id == user_id).all()
 
 
-def get_pakaian_by_id(db: Session, pakaian_id: int) -> Optional[models.Pakaian]:
+def get_laundry_session_by_id(
+        db: Session,
+        session_id: int
+) -> Optional[models.LaundrySession]:
     """
-    Mengambil satu item pakaian (non-soft-delete) berdasarkan ID-nya.
+    Gets a single laundry session by its ID.
 
     Args:
-        db (Session): Sesi database SQLAlchemy.
-        pakaian_id (int): ID item pakaian yang dicari.
+        db (Session): The SQLAlchemy database session.
+        session_id (int): The ID of the laundry session.
 
     Returns:
-        Optional[models.Pakaian]: Objek pakaian jika ditemukan, None jika tidak.
+        Optional[models.LaundrySession]: The LaundrySession object if found, else None.
     """
-    return db.query(models.Pakaian).filter(models.Pakaian.id == pakaian_id, models.Pakaian.deleted_at == None).first()
+    return db.query(models.LaundrySession).filter(models.LaundrySession.id == session_id).first()
 
 
-def update_pakaian(db: Session, db_pakaian: models.Pakaian, pakaian_update: schemas.PakaianUpdate) -> models.Pakaian:
+def update_laundry_status(
+        db: Session,
+        db_session: models.LaundrySession,
+        new_status: schemas.LaundryStatus
+) -> models.LaundrySession:
     """
-    Meng-update data item pakaian yang ada di database.
+    Updates the status of a laundry session.
 
     Args:
-        db (Session): Sesi database SQLAlchemy.
-        db_pakaian (models.Pakaian): Objek pakaian (model) yang ingin di-update.
-        pakaian_update (schemas.PakaianUpdate): Skema data baru.
+        db (Session): The SQLAlchemy database session.
+        db_session (models.LaundrySession): The session object to update.
+        new_status (schemas.LaundryStatus): The new status enum value.
 
     Returns:
-        models.Pakaian: Objek pakaian yang sudah di-update.
-    """
-    # Ambil data dari skema sebagai dictionary
-    update_data = pakaian_update.model_dump(exclude_unset=True)
-
-    # Loop melalui data dan update field di objek SQLAlchemy
-    for key, value in update_data.items():
-        setattr(db_pakaian, key, value)
-
-    db.add(db_pakaian)
-    db.commit()
-    db.refresh(db_pakaian)
-    return db_pakaian
-
-
-def soft_delete_pakaian(db: Session, db_pakaian: models.Pakaian) -> dict:
-    """
-    Melakukan soft delete pada item pakaian dengan mengisi kolom 'deleted_at'.
-
-    Args:
-        db (Session): Sesi database SQLAlchemy.
-        db_pakaian (models.Pakaian): Objek pakaian (model) yang ingin dihapus.
-
-    Returns:
-        dict: Pesan konfirmasi sukses.
-    """
-    db_pakaian.deleted_at = datetime.now(timezone.utc)
-    db.add(db_pakaian)
-    db.commit()
-    return {"message": "Pakaian successfully moved to trash"}
-
-
-def get_laundry_session_by_id(db: Session, session_id: int) -> Optional[models.SesiLaundry]:
-    """
-    Mengambil satu sesi laundry berdasarkan ID-nya.
-
-    Args:
-        db (Session): Sesi database SQLAlchemy.
-        session_id (int): ID sesi laundry yang dicari.
-
-    Returns:
-        Optional[models.SesiLaundry]: Objek sesi laundry jika ditemukan, None jika tidak.
-    """
-    return db.query(models.SesiLaundry).filter(models.SesiLaundry.id == session_id).first()
-
-
-def update_laundry_status(db: Session, db_session: models.SesiLaundry,
-                          new_status: schemas.StatusLaundry) -> models.SesiLaundry:
-    """
-    Meng-update status dari sebuah sesi laundry.
-
-    Args:
-        db (Session): Sesi database SQLAlchemy.
-        db_session (models.SesiLaundry): Objek sesi laundry yang ingin di-update.
-        new_status (schemas.StatusLaundry): Enum status baru.
-
-    Returns:
-        models.SesiLaundry: Objek sesi laundry yang sudah di-update.
+        models.LaundrySession: The updated LaundrySession object.
     """
     db_session.status = new_status.value
     db.add(db_session)
@@ -236,14 +300,14 @@ def update_laundry_status(db: Session, db_session: models.SesiLaundry,
 
 def create_reset_token(db: Session, email: str) -> str:
     """
-    Membuat token reset password baru, menghapus token lama jika ada.
+    Creates a new password reset token, invalidating any old ones.
 
     Args:
-        db (Session): Sesi database SQLAlchemy.
-        email (str): Email user yang me-request reset.
+        db (Session): The SQLAlchemy database session.
+        email (str): The user's email requesting the reset.
 
     Returns:
-        str: String token unik yang aman.
+        str: A unique, secure token string.
     """
     db.query(models.PasswordResetToken).filter(models.PasswordResetToken.email == email).delete()
 
@@ -258,15 +322,15 @@ def create_reset_token(db: Session, email: str) -> str:
 
 def reset_user_password(db: Session, token_str: str, new_password: str) -> Optional[models.User]:
     """
-    Me-reset password user menggunakan token yang valid.
+    Resets a user's password using a valid token.
 
     Args:
-        db (Session): Sesi database SQLAlchemy.
-        token_str (str): Token reset yang diterima user.
-        new_password (str): Password baru (plain text).
+        db (Session): The SQLAlchemy database session.
+        token_str (str): The reset token provided by the user.
+        new_password (str): The new plain-text password.
 
     Returns:
-        Optional[models.User]: Objek user jika berhasil, None jika token invalid/expired.
+        Optional[models.User]: The User object if successful, else None.
     """
     db_token = db.query(models.PasswordResetToken).filter(models.PasswordResetToken.token == token_str).first()
 
@@ -284,27 +348,3 @@ def reset_user_password(db: Session, token_str: str, new_password: str) -> Optio
 
     db.commit()
     return user
-
-
-def update_pakaian_foto_url(db: Session, pakaian_id: int, foto_url: str) -> Optional[models.Pakaian]:
-    """
-    Meng-update path/object_name foto (foto_url) untuk item pakaian.
-
-    Fungsi ini sebaiknya dipanggil setelah pre-signed URL dibuat,
-    untuk menyimpan object_name (path file di MinIO) ke database.
-
-    Args:
-        db (Session): Sesi database SQLAlchemy.
-        pakaian_id (int): ID pakaian yang ingin di-update.
-        foto_url (str): Path/object_name baru yang akan disimpan.
-
-    Returns:
-        Optional[models.Pakaian]: Objek pakaian yang sudah di-update, None jika tidak ditemukan.
-    """
-    db_pakaian = get_pakaian_by_id(db, pakaian_id=pakaian_id)
-    if db_pakaian:
-        db_pakaian.foto_url = foto_url
-        db.add(db_pakaian)
-        db.commit()
-        db.refresh(db_pakaian)
-    return db_pakaian
