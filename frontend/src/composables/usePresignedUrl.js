@@ -1,5 +1,7 @@
 import {ref} from 'vue';
 import {useApi} from './useApi';
+import axios from 'axios';
+
 
 export function usePresignedUrl() {
     const {api} = useApi();
@@ -10,22 +12,32 @@ export function usePresignedUrl() {
     const getPresignedUrl = async (clothingId, file) => {
         loading.value = true;
         error.value = null;
+
+        const uploadData = await getUploadUrl(clothingId, file)
+
+        if (!uploadData || !uploadData.url) {
+            loading.value = false;
+            error.value = 'Failed to get upload URL.'
+            return false
+        }
+
         try {
-            const response = await api.post(`/clothing/${clothingId}/image-upload-url`, {
-                file_name: file.name,
-                content_type: file.type,
+            await axios.put(uploadData.url, file, {
+                headers: {
+                    'Content-Type': file.type
+                }
             });
-            presignedUrl.value = response.data;
-            return response.data;
+
+            loading.value = false;
+            return true;
         } catch (err) {
-            error.value = err;
+            error.value = 'File upload failed';
             console.error('Failed to get presigned URL', err);
-        } finally {
             loading.value = false;
         }
     };
 
-    const uploadFile = async (presignedUrlData, file) => {
+    const uploadFile = async (clothingId, file) => {
         loading.value = true;
         error.value = null;
         try {

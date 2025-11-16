@@ -24,24 +24,20 @@ s3_client_public = boto3.client(
     config=Config(signature_version='s3v4'),
 )
 
-def create_presigned_upload_url(object_name: str, bucket_name: str = env.MINIO_BUCKET, expiration: int = 900) -> str:
+def create_presigned_upload_url(object_name: str, content_type: str, bucket_name: str = env.MINIO_BUCKET, expiration: int = 900) -> str:
     """
     Generates a pre-signed URL for uploading a file to MinIO.
     """
     try:
         response = s3_client_public.generate_presigned_post(
-            Bucket=bucket_name,
-            Key=object_name,
+            'put_object',
+            Params={
+                'Bucket': bucket_name,
+                'Key': object_name,
+                'ContentType': content_type,
+            },
             ExpiresIn=expiration
         )
-        
-        # # Replace internal endpoint with public-facing one for the browser
-        # internal_endpoint = f"http{'s' if env.MINIO_USE_SSL else ''}://{env.MINIO_ENDPOINT}"
-        # public_endpoint = env.MINIO_PUBLIC_ENDPOINT.rstrip('/')
-        #
-        # if public_endpoint not in response['url']:
-        #     response['url'] = response['url'].replace(internal_endpoint, public_endpoint)
-
         return response
     except ClientError as e:
         logger.error(f"Failed to generate pre-signed upload URL: {e}")

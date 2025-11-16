@@ -114,9 +114,9 @@ def get_clothing_item_by_id(db: Session, clothing_item_id: int) -> Optional[mode
     Returns:
         Optional[models.ClothingItem]: The ClothingItem object if found, else None.
     """
-    return db.query(models.Pakaian).filter(
-        models.Pakaian.id == pakaian_id,
-        models.Pakaian.deleted_at == None
+    return db.query(models.ClothingItem).filter(
+        models.ClothingItem.id == clothing_item_id,
+        models.ClothingItem.deleted_at == None
     ).first()
 
 

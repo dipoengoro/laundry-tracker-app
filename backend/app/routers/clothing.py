@@ -185,11 +185,15 @@ async def generate_upload_url(
     object_name = f"clothing_images/{current_user.id}/{clothing_item_id}_{datetime.now().timestamp()}.{file_extension}"
 
     presigned_url_data = minio_client.create_presigned_upload_url(object_name=object_name)
+    presigned_url_string = minio_client.create_presigned_upload_url(
+        object_name=object_name,
+        content_type=upload_data.content_type,
+    )
 
     if not crud.update_clothing_item_photo_url(db, clothing_item_id, object_name):
         raise HTTPException(status_code=500, detail="Failed to update clothing photo URL in DB")
 
-    return {"url": presigned_url_data['url'], "fields": presigned_url_data['fields']}
+    return {"url": presigned_url_string}
 
 
 class ImageUploadRequest(schemas.BaseModel):
